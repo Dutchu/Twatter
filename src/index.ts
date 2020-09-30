@@ -1,43 +1,37 @@
 import "reflect-metadata";
 import { MikroORM } from "@mikro-orm/core";
 import { __prod__ } from "./constants";
-import { Post } from "./enteties/Post";
-import microConfig from "./mikro-orm.config"
+import microConfig from "./mikro-orm.config";
 import express from "express";
 import { ApolloServer } from "apollo-server-express";
 import { buildSchema } from "type-graphql";
 import { HelloResolver } from "./resolvers/hello";
 import { PostResolver } from "./resolvers/post";
-
-
+import { Login, UserResolver } from "./resolvers/user";
 
 const main = async () => {
-    const orm = await MikroORM.init(microConfig);
-    await orm.getMigrator().up();
-    //const post = orm.em.create(Post, {title: 'my first post'});
-    //orm.em.persistAndFlush(post);
-    //const posts = await orm.em.find(Post, {});
-    //console.log(posts); 
-    
-    const app = express();
+  const orm = await MikroORM.init(microConfig);
+  await orm.getMigrator().up();
 
-    const apolloServer = new ApolloServer({
-        schema: await buildSchema({
-            resolvers: [HelloResolver, PostResolver],
-            validate: false,
-        }),
-        context: () => ({ em: orm.em })
-    })
+  const app = express();
 
-    apolloServer.applyMiddleware({ app })
-    
-    app.listen(4000, () => {
-        console.log('server started on localhost:4000');
-    })
+  const apolloServer = new ApolloServer({
+    schema: await buildSchema({
+      resolvers: [HelloResolver, PostResolver, UserResolver, Login],
+      validate: false,
+    }),
+    context: () => ({
+      em: orm.em,
+    }),
+  });
+
+  apolloServer.applyMiddleware({ app });
+
+  app.listen(4000, () => {
+    console.log("server started on localhost:4000");
+  });
 };
 
-
 main().catch((err) => {
-    console.error(err);
+  console.error(err);
 });
-
